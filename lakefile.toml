@@ -1,0 +1,10 @@
+name = "inf"
+version = "0.1.0"
+defaultTargets = ["inf"]
+
+[[lean_lib]]
+name = "Inf"
+
+[[lean_exe]]
+name = "inf"
+root = "Main"
