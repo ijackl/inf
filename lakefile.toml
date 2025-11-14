@@ -4,7 +4,3 @@ defaultTargets = ["inf"]
 
 [[lean_lib]]
 name = "Inf"
-
-[[lean_exe]]
-name = "inf"
-root = "Main"
