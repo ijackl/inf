@@ -2,7 +2,7 @@ import Inf.AM1.Limit
 import Mathlib.Data.Nat.Factorial.Basic
 import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 
-theorem HasLim'.one_add_inv_pow (a : ℕ → ℝ) (h : HasLim' a ⊤) :
+theorem HasLim'.one_add_inv_pow {a : ℕ → ℝ} (h : HasLim' a ⊤) :
     HasLim (fun n => (1 + (a n)⁻¹) ^ (a n)) (Real.exp 1) := by
   rw [hasLim_iff_tendsto]
   convert (Real.tendsto_one_add_div_rpow_exp 1).comp (hasLim'_top_iff_tendsto.mp h)
@@ -163,3 +163,37 @@ theorem Zad6 {a : ℕ → ℤ} {g : ℝ} (h : HasLim (fun n => (a n : ℝ)) g) :
     congr 1; omega
   replace h := (HasLim.of_eventually_eq ⟨n₀, hc⟩ h).eq (const _)
   intro n hn; specialize hc n hn; rw [← hc, ← h]
+
+theorem Zad7_sup {a : ℕ → ℝ} (h : HasLim a 0) (hp : ∀ n, 0 < a n) : iSup a ∈ Set.range a := by
+  simp; have isup_pos := (lt_ciSup_iff h.bddAbove).mpr ⟨0, hp 0⟩
+  replace ⟨n₀, h₀⟩ := h (iSup a / 2) (half_pos isup_pos); simp at h₀
+  have hn₀ : n₀ ≠ 0 := by
+    by_contra!; subst this; simp at h₀
+    exact not_le_of_gt (half_lt_self isup_pos) (ciSup_le fun n => le_of_abs_le (h₀ n).le)
+  have ⟨n, hn, hs⟩ := Finset.exists_mem_eq_sup' (Finset.nonempty_range_iff.mpr hn₀) a
+  exists n
+  refine ge_antisymm (ciSup_le ?bound) (le_ciSup h.bddAbove n)
+  intro x; rw [← hs]; by_cases! x < n₀
+  case pos hx => exact Finset.le_sup' a (by simpa)
+  case neg hx =>
+    by_contra!; replace this := lt_trans this (lt_of_abs_lt (h₀ x hx))
+    refine not_le_of_gt (half_lt_self isup_pos) (ciSup_le fun n => ?_)
+    by_cases! n < n₀
+    case pos hn => exact le_trans (Finset.le_sup' a (by simpa)) this.le
+    case neg hn => exact le_of_abs_le (h₀ n hn).le
+
+theorem Zad7_inf {a : ℕ → ℝ} (h : HasLim a 0) (hp : ∀ n, 0 < a n) : iInf a ∉ Set.range a := by
+  simp; suffices iInf a = 0 by rw [this]; exact fun n => ne_of_gt (hp n)
+  refine ge_antisymm (le_ciInf fun n => (hp n).le) (Real.sInf_le_iff h.bddBelow (Set.range_nonempty a) |>.mpr ?_)
+  simp [HasLim] at *; intro e he; replace ⟨n, h⟩ := h e he; exact ⟨n, lt_of_abs_lt (h n le_rfl)⟩
+
+theorem Zad15 [Field R] [LinearOrder R] [IsOrderedRing R] : ¬ ∀ a b : ℕ → R,
+    HasLim (a * b) 0 → (HasLim a 0 ∨ HasLim b 0) := by
+  simp; exists (fun n => ↑(n % 2)), (fun n => ↑(1 - n % 2)); and_intros
+  · apply HasLim.of_eq fun n => show ↑(n % 2) * ↑(1 - n % 2) = (0 : R) by
+      by_cases h : n % 2 = 0
+      · simp [h]
+      · simp at h; simp [h]
+    exact const 0
+  · simp [HasLim]; exists 1, (by positivity); intro n; exists 2 * n + 1, (by omega); simp
+  · simp [HasLim]; exists 1, (by positivity); intro n; exists 2 * n, (by omega); simp
